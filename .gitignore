@@ -102,3 +102,18 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+
+*.db
+
+
+*.cache*
+
+*.sqbpro
+
+*.csv
+
+testing.py
+
+/.idea

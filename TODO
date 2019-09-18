@@ -1,0 +1,52 @@
+
+ISSUES
+  Something strange with WRITE_CVS = 1 - Recommended stops working
+    Probably problems with fetchall, need to fetch first and loop in CSV write
+
+Spotify switch
+  User only want to create statistics and not create Spotify playlists
+
+Spotify playlists
+  Get specific week, month or year top list
+  Keep the limit to 50
+  Recommended tracks/artists based on last week/month/year
+    - Get recommended from spotify
+    - Get recommended from last.fm
+    - Remove already known tracks
+  Random playlist
+    Updated each day/week/month
+    With some criteria
+  Artist top list
+    main.py artist_toplist 'Coldplay' based on Last fm scrobbles
+  List of tracks you have not heard from your favorite artists
+
+Database
+  Create new table with playlists dates and other good info
+  - Name the database file after which user it contains
+  When searching for track in database, add option to search in a time interval
+
+Script improvements
+  In database put date when playlists like random each week are created
+  - Create cvs file with all lists created
+
+Config file
+  - Create and push a default config.py file
+
+Stats
+  Popular count
+    main.py popular_count
+    Check all artists in last fm database
+    Check followers on Spotify
+    Weigh against amount of scrobbles in % of the artist
+    Get a number between 1-100
+  Number of tracks per artist
+    How many artists have you only played one track of
+
+Lastfm api
+  Be able to run without password
+    Create stats and spotify playlists for other users
+
+Misc
+  Write a better README
+  Debug prints
+    Enable/disable function

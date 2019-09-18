@@ -1,0 +1,7 @@
+certifi==2019.6.16
+chardet==3.0.4
+idna==2.8
+pylast==3.1.0
+requests==2.22.0
+spotipy==2.4.4
+urllib3==1.25.3
