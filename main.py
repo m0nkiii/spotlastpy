@@ -7,9 +7,14 @@ import csv
 import os
 import traceback
 
-from config import LASTFM_DATA, LASTFM_API, \
-    SPOTIFY_DATA, SPOTIFY_API, SPOTIFY_PLAYLISTS, SPOTIFY_ENABLE, \
-    DATABASE, WRITE_CSV
+try:
+    from my_config import LASTFM_DATA, LASTFM_API, \
+        SPOTIFY_DATA, SPOTIFY_API, SPOTIFY_PLAYLISTS, SPOTIFY_ENABLE, \
+        DATABASE, WRITE_CSV
+except ImportError:
+    from config import LASTFM_DATA, LASTFM_API, \
+        SPOTIFY_DATA, SPOTIFY_API, SPOTIFY_PLAYLISTS, SPOTIFY_ENABLE, \
+        DATABASE, WRITE_CSV
 
 
 class UPDATE_MODE(Enum):

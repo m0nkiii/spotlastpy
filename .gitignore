@@ -107,6 +107,7 @@ venv.bak/
 
 *.db
 
+my_config.py
 
 *.cache*
 
