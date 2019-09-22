@@ -1,7 +1,11 @@
 # pyspotlast
 Python Spotify Last fm
 
-Uses pylast and spotipy
+# Requirements
+
+Look into requirement.txt
+
+Python 3.7
 
 Purpose
 ------------
