@@ -5,7 +5,7 @@ Python Spotify Last fm
 
 Look into requirement.txt
 
-Python 3.7
+Python 3.7.4
 
 Purpose
 ------------

@@ -31,7 +31,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS lastfm_scrobbles (  id integer PRIMARY K
                                                             artist text,
                                                             title text,
                                                             album text,
-                                                            time_stamp integer,
+                                                            timestamp integer,
                                                             loved int default 0,
                                                             duration int default 0);
                                                             ''')
