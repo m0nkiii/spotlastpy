@@ -33,6 +33,12 @@ Config file
   - Create and push a default config.py file
 
 Stats
+  Animated graphs
+    Top artists
+    Top track
+    Top album
+    Top top each year
+  H-index
   Popular count
     main.py popular_count
     Check all artists in last fm database
