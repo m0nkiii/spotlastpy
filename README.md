@@ -30,6 +30,8 @@ How to start
 Auto Playlists
 ------------
 Recommended(last.fm and spotify) list based on last week scrobbles
+
 Recommended(last.fm and spotify) list based on last month scrobbles
+
 Recommended(last.fm and spotify) list based on last year scrobbles
 
