@@ -7,13 +7,14 @@ if __name__ == "__main__":
         # so round it up and run
         # subprocess.call('python main.py get_all_scrobbles 1000')
 
-        update = 1
+        update = 0
         duration = 0
         artist_tops = 0
         random = 0
         top_total = 0
         unique = 0
-        recommended = 1
+        recommended = 0
+        my_hit_wonders = 1
 
 # Update
 
@@ -60,6 +61,15 @@ if __name__ == "__main__":
             subprocess.call("python main.py recommended_weekly")
             subprocess.call("python main.py recommended_monthly")
             subprocess.call("python main.py recommended_yearly")
+
+# My hit wonders
+
+        if my_hit_wonders:
+            subprocess.call("python main.py my_hit_wonders 1")
+            subprocess.call("python main.py my_hit_wonders 2")
+            subprocess.call("python main.py my_hit_wonders 3")
+            subprocess.call("python main.py my_hit_wonders 4")
+            subprocess.call("python main.py my_hit_wonders 5")
 
     except Exception as e:
         print(f"Exception:{e}\n")

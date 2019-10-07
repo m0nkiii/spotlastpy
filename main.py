@@ -215,6 +215,15 @@ def database_get_years():
     return c.fetchall()
 
 
+def database_find_tracks_from_artist(artist):
+    return execute_sql_get_list(f'all_my_tracks_from_{artist}',
+        f"SELECT artist, title, count(*) "
+        f"FROM lastfm_scrobbles "
+        f"WHERE artist LIKE \"{artist}%\" "
+        f"GROUP BY artist, title "
+        f"ORDER BY count(*) DESC")
+
+
 def database_find_track(artist, title):
     row = execute_sql_get_value(
         f"SELECT count(*) "
@@ -745,8 +754,66 @@ def create_recommended(t):
                 playlist_add_tracks_uri(playlist_id_spotify, track_names_spotify)
 
 
+def my_hit_wonders(number_of_hits):
+    sql = "SELECT artist, count(artist) as total_tracks_of_artist, sum(scrobbles) as total_scrobbles, " \
+          "sum(scrobbles)/count(artist) as ratio " \
+          "FROM (SELECT artist, title, count(*) as scrobbles FROM lastfm_scrobbles " \
+          "GROUP BY artist, title ORDER BY count(*) DESC) as top " \
+          "GROUP BY artist " \
+          "ORDER BY ratio ASC"
+    sql_rows = execute_sql_get_list(f'my_{number_of_hits}_hit_wonders', sql)
+
+    list_of_wonder_artists = []
+
+    for row in sql_rows:
+        if row[1] == number_of_hits and row[3] > 9:
+            list_of_wonder_artists.insert(0, row[0])
+
+    if SPOTIFY_ENABLE:
+        playlist_id = playlist_exists(f'My {number_of_hits} Hit Wonders')
+
+        if playlist_id is None:
+            playlist_id = playlist_create(f'My {number_of_hits} Hit Wonders')
+
+            for artist in list_of_wonder_artists:
+                tracks = database_find_tracks_from_artist(artist)
+                playlist_add_tracks_name(playlist_id, tracks)
+
 # def recommended_playlist(list):
 #    pass
+
+
+# #################### Flourish ###############
+
+def line_chart_top_artists():
+    pass
+#    years = database_get_years()
+#    years = years.reverse()
+#
+#    columns = ['Artist']
+#    for year in years:
+#        columns.append(year[0])
+#
+#    filename = f"./CSV/test.csv"
+#    os.makedirs(os.path.dirname(filename), exist_ok=True)
+#    with open(filename, "w", newline='', encoding="utf-8") as csv_file:
+#
+#        csv_writer = csv.writer(csv_file, delimiter=';')
+#        csv.writer.writerow(columns)
+#
+#    for year in years:
+#        p_name = f"Top 50 {year[0]} artists"
+#        artists = execute_sql_get_list(
+#            p_name,
+#            f"SELECT artist, count(*) "
+#            f"FROM lastfm_scrobbles "
+#            f"WHERE strftime('%Y', timestamp, 'unixepoch') < '{year[0]}' "
+#            f"GROUP BY artist "
+#            f"ORDER BY count(*) DESC "
+#            f"LIMIT 5")
+#
+#            csv_writer.writerows(artists)
+
 
 # ################# MAIN ######################
 
@@ -758,7 +825,12 @@ if __name__ == "__main__":
         if SPOTIFY_ENABLE:
             playlist_get_all()
 
-        if action == 'get_all_scrobbles':
+        if action == 'line_chart_top_artists':
+            line_chart_top_artists()
+        elif action == 'my_hit_wonders':
+            number_of_hits = int(sys.argv[2])
+            my_hit_wonders(number_of_hits)
+        elif action == 'get_all_scrobbles':
             number_of_scrobbles = int(sys.argv[2])
             get_all_scrobbles(number_of_scrobbles)
         elif action == 'update_scrobbles':
