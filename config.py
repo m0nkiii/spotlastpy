@@ -6,7 +6,7 @@ import spotipy
 import spotipy.util as util
 import logging
 
-WRITE_CSV = 0
+WRITE_CSV = 1
 
 LASTFM_DATA = {'API_KEY': 'YOUR_API_KEY',
          'API_SECRET': 'YOUR_API_SECRET',
