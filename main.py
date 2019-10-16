@@ -82,11 +82,14 @@ def internal_get_recent_tracks(number, mode):
 
         if mode == UPDATE_MODE.GET_FIRST_SCROBBLE:
             if min_date == 0:
-                recent_tracks = LASTFM_API.get_user(LASTFM_DATA['username']).get_recent_tracks(limit=number, time_from=0)
+                recent_tracks = LASTFM_API.get_user(
+                    LASTFM_DATA['username']).get_recent_tracks(limit=number, time_from=0)
             else:
-                recent_tracks = LASTFM_API.get_user(LASTFM_DATA['username']).get_recent_tracks(limit=number, time_from=0, time_to=min_date)
+                recent_tracks = LASTFM_API.get_user(
+                    LASTFM_DATA['username']).get_recent_tracks(limit=number, time_from=0, time_to=min_date)
         elif mode == UPDATE_MODE.UPDATE_DATABASE:
-            recent_tracks = LASTFM_API.get_user(LASTFM_DATA['username']).get_recent_tracks(limit=number, time_from=max_date+1)
+            recent_tracks = LASTFM_API.get_user(
+                LASTFM_DATA['username']).get_recent_tracks(limit=number, time_from=max_date+1)
 
         count = 0
         values = []
@@ -215,6 +218,70 @@ def database_get_years():
     return c.fetchall()
 
 
+def database_get_top_tracks(limit=0):
+    c = DATABASE.cursor()
+    # All tracks
+    if limit == 0:
+        print(f"Get all the top tracks")
+        c.execute(f"SELECT artist, title, count(*) "
+                  f"FROM lastfm_scrobbles "
+                  f"GROUP BY artist, title "
+                  f"ORDER BY count(*) DESC")
+    # Limit it to a certain number
+    else:
+        print(f"Get the top {limit} tracks")
+        c.execute(f"SELECT artist, title, count(*) "
+                  f"FROM lastfm_scrobbles "
+                  f"GROUP BY artist, title "
+                  f"ORDER BY count(*) DESC "
+                  f"LIMIT {limit}")
+
+    return c.fetchall()
+
+
+def database_get_top_albums(limit=0):
+
+    c = DATABASE.cursor()
+    # All tracks
+    if limit == 0:
+        print("Get all the top albums")
+        c.execute(f"SELECT album, count(*) "
+                  f"FROM lastfm_scrobbles "
+                  f"WHERE album IS NOT NULL "
+                  f"GROUP BY album "
+                  f"ORDER BY count(*) DESC")
+    # Limit it to a certain number
+    else:
+        print(f"Get the top {limit} albums")
+        c.execute(f"SELECT album, count(*) "
+                  f"FROM lastfm_scrobbles "
+                  f"WHERE album IS NOT NULL "
+                  f"GROUP BY album "
+                  f"ORDER BY count(*) DESC "
+                  f"LIMIT {limit}")
+    return c.fetchall()
+
+
+def database_get_top_artists(limit=0):
+    c = DATABASE.cursor()
+    # All artists
+    if limit == 0:
+        print(f"Get all the top artists")
+        c.execute("SELECT DISTINCT(artist) "
+                  "FROM lastfm_scrobbles "
+                  "ORDER BY artist")
+    # Limit it to a certain number
+    else:
+        print(f"Get the top {limit} artists")
+        c.execute(f"SELECT artist, count(*) "
+                  f"FROM lastfm_scrobbles "
+                  f"GROUP BY artist "
+                  f"ORDER BY count(*) DESC "
+                  f"LIMIT {limit}")
+
+    return c.fetchall()
+
+
 def database_find_tracks_from_artist(artist):
     return execute_sql_get_list(f'all_my_tracks_from_{artist}',
         f"SELECT artist, title, count(*) "
@@ -273,27 +340,34 @@ def get_all_unique_tracks():
 
 def execute_sql_get_list(name, s):
     print(f"execute_sql_get_list: ({name}) - {s}")
-    c = DATABASE.cursor()
-
-    try:
-        c.execute(s)
-    except Exception as e:
-        print(f"execute_sql_get_list - Exception when running {s}: {e}")
-        return []
 
     try:
         if WRITE_CSV and name is not None:
+            cursor_csv = DATABASE.cursor()
+            cursor_csv.execute(s)
+
             filename = f"./CSV/{name}.csv"
+            print(f'Write CSV file: {filename}')
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             with open(filename, "w", newline='', encoding="utf-8") as csv_file:
                 csv_writer = csv.writer(csv_file, delimiter=';')
-                csv_writer.writerow([i[0] for i in c.description]) # write headers
-                csv_writer.writerows(c)
+                # write headers
+                csv_writer.writerow([f'"{i[0]}"' for i in cursor_csv.description])
+                for row in cursor_csv.fetchall():
+                    csv_writer.writerow([f'"{r}"' for r in row])
+
     except Exception as e:
         print(f"execute_sql_get_list - Exception when writing to CSV: {e}")
 
-    # Probably I need to fetch all and loop it in the csv_write
+    try:
+        c = DATABASE.cursor()
+        c.execute(s)
+    except Exception as e:
+        print(f"execute_sql_get_list - Exception when executing {s}: {e}")
+        return []
+
     rows = c.fetchall()
+
     print(f"execute_sql_get_list: ({name}) - length of list: {len(rows)}")
     return rows
 
@@ -414,13 +488,17 @@ def playlist_add_tracks_name(playlist_id, list_of_track_name):
 def playlist_replace_tracks_uri(playlist_id, list_of_track_uri):
     print(f"playlist_add_tracks_name: {playlist_id} - length of list uri: {len(list_of_track_uri)}")
     for i in range(0, len(list_of_track_uri), 100):
-        results = SPOTIFY_API.user_playlist_replace_tracks(SPOTIFY_DATA['username'], playlist_id, list_of_track_uri[i:i+100])
+        results = SPOTIFY_API.user_playlist_replace_tracks(SPOTIFY_DATA['username'],
+                                                           playlist_id,
+                                                           list_of_track_uri[i:i+100])
 
 
 def playlist_add_tracks_uri(playlist_id, list_of_track_uri):
     print(f"playlist_add_tracks_uri: {playlist_id} - length of list uri: {len(list_of_track_uri)}")
     for i in range(0, len(list_of_track_uri), 100):
-        results = SPOTIFY_API.user_playlist_add_tracks(SPOTIFY_DATA['username'], playlist_id, list_of_track_uri[i:i+100])
+        results = SPOTIFY_API.user_playlist_add_tracks(SPOTIFY_DATA['username'],
+                                                       playlist_id,
+                                                       list_of_track_uri[i:i+100])
 
 
 def spotify_get_artist(artist_name):
@@ -786,34 +864,230 @@ def my_hit_wonders(number_of_hits):
 # #################### Flourish ###############
 
 def line_chart_top_artists():
-    pass
-#    years = database_get_years()
-#    years = years.reverse()
-#
-#    columns = ['Artist']
-#    for year in years:
-#        columns.append(year[0])
-#
-#    filename = f"./CSV/test.csv"
-#    os.makedirs(os.path.dirname(filename), exist_ok=True)
-#    with open(filename, "w", newline='', encoding="utf-8") as csv_file:
-#
-#        csv_writer = csv.writer(csv_file, delimiter=';')
-#        csv.writer.writerow(columns)
-#
-#    for year in years:
-#        p_name = f"Top 50 {year[0]} artists"
-#        artists = execute_sql_get_list(
-#            p_name,
-#            f"SELECT artist, count(*) "
-#            f"FROM lastfm_scrobbles "
-#            f"WHERE strftime('%Y', timestamp, 'unixepoch') < '{year[0]}' "
-#            f"GROUP BY artist "
-#            f"ORDER BY count(*) DESC "
-#            f"LIMIT 5")
-#
-#            csv_writer.writerows(artists)
+    sql_years = database_get_years()
+    sql_artists = database_get_top_artists(250)
 
+    years = []
+    artists = []
+
+    for year in sql_years:
+        years.append(year[0])
+
+    for artist in sql_artists:
+        artists.append(artist[0])
+
+    years.reverse()
+
+    months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+
+    filename = f"./CSV/flourish_artists.csv"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", newline='', encoding="utf-8") as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',', skipinitialspace=True)
+
+        first_row = ['Artist']
+
+        for year in years:
+            for month in months:
+                first_row.append(f"{year}-{month}")
+
+        csv_writer.writerow(first_row)
+
+        count = execute_sql_get_list('line_chart_artist',
+            "SELECT artist, "
+            "strftime('%Y', timestamp, 'unixepoch'), "
+            "strftime('%m', timestamp, 'unixepoch'), "
+            "count(*) "
+            "FROM lastfm_scrobbles "
+            "GROUP BY artist, strftime('%Y', timestamp, 'unixepoch'), strftime('%m', timestamp, 'unixepoch') "
+            "ORDER BY artist")
+
+        for artist in artists:
+            row = [f'"{artist}"']
+            total_count = 0
+            for year in years:
+                for month in months:
+                    for c in count:
+                        if c[0] == artist and c[1] == year and c[2] == month:
+                            total_count += int(c[3])
+                            row.append(total_count)
+                            break
+                    else:
+                        row.append(total_count)
+            csv_writer.writerow(row)
+            print(artist)
+    return
+
+
+def line_chart_top_tracks():
+    sql_years = database_get_years()
+    sql_tracks = database_get_top_tracks(250)
+
+    years = []
+    tracks = []
+
+    for year in sql_years:
+        years.append(year[0])
+
+    for track in sql_tracks:
+        tracks.append(f'{track[0]} - {track[1]}')
+
+    years.reverse()
+
+    months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+
+    filename = f"./CSV/flourish_tracks.csv"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", newline='', encoding="utf-8") as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',', skipinitialspace=True)
+
+        first_row = ['Track']
+
+        for year in years:
+            for month in months:
+                first_row.append(f"{year}-{month}")
+
+        csv_writer.writerow(first_row)
+
+        count = execute_sql_get_list('line_chart_tracks',
+            "SELECT artist, title, "
+            "strftime('%Y', timestamp, 'unixepoch'), "
+            "strftime('%m', timestamp, 'unixepoch'), "
+            "count(*) "
+            "FROM lastfm_scrobbles "
+            "GROUP BY artist, title, strftime('%Y', timestamp, 'unixepoch'), strftime('%m', timestamp, 'unixepoch') "
+            "ORDER BY artist, title")
+
+        for track in tracks:
+            row = [f'"{track}"']
+            total_count = 0
+            for year in years:
+                for month in months:
+                    for c in count:
+                        if f'{c[0]} - {c[1]}' == track and c[2] == year and c[3] == month:
+                            total_count += int(c[4])
+                            row.append(total_count)
+                            break
+                    else:
+                        row.append(total_count)
+            csv_writer.writerow(row)
+            print(track)
+    return
+
+
+def line_chart_top_albums():
+    sql_years = database_get_years()
+    sql_album = database_get_top_albums(250)
+
+    years = []
+    albums = []
+
+    for year in sql_years:
+        years.append(year[0])
+
+    for album in sql_album:
+        albums.append(f'{album[0]}')
+
+    years.reverse()
+
+    months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+
+    filename = f"./CSV/flourish_albums.csv"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", newline='', encoding="utf-8") as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',', skipinitialspace=True)
+
+        first_row = ['Album']
+
+        for year in years:
+            for month in months:
+                first_row.append(f"{year}-{month}")
+
+        csv_writer.writerow(first_row)
+
+        count = execute_sql_get_list('line_chart_albums',
+            "SELECT album, "
+            "strftime('%Y', timestamp, 'unixepoch'), "
+            "strftime('%m', timestamp, 'unixepoch'), "
+            "count(*) "
+            "FROM lastfm_scrobbles "
+            "WHERE album IS NOT NULL "
+            "GROUP BY album, strftime('%Y', timestamp, 'unixepoch'), strftime('%m', timestamp, 'unixepoch') "
+            "ORDER BY album")
+
+        for album in albums:
+            row = [f'"{album}"']
+            total_count = 0
+            for year in years:
+                for month in months:
+                    for c in count:
+                        if f'{c[0]}' == album and c[1] == year and c[2] == month:
+                            total_count += int(c[3])
+                            row.append(total_count)
+                            break
+                    else:
+                        row.append(total_count)
+            csv_writer.writerow(row)
+            print(album)
+    return
+
+# ################# STATS #####################
+
+
+def get_stats():
+    artist_every_year()
+
+
+def artist_every_year():
+    sql_years = database_get_years()
+    sql_artists = database_get_top_artists()
+
+    years = []
+    artists = []
+
+    for year in sql_years:
+        years.append(year[0])
+
+    for artist in sql_artists:
+        artists.append(artist[0])
+
+    years.reverse()
+
+    filename = f"./CSV/artist_every_year.csv"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", newline='', encoding="utf-8") as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',', skipinitialspace=True)
+
+        first_row = ['Artist']
+
+        for year in years:
+            first_row.append(f"{year}")
+        first_row.append('"total number of played years"')
+
+        csv_writer.writerow(first_row)
+
+        count = execute_sql_get_list('every_year_artist',
+                                     "SELECT artist, "
+                                     "strftime('%Y', timestamp, 'unixepoch'), "
+                                     "count(*) "
+                                     "FROM lastfm_scrobbles "
+                                     "GROUP BY artist, strftime('%Y', timestamp, 'unixepoch') "
+                                     "ORDER BY artist")
+
+        for artist in artists:
+            row = [f'"{artist}"']
+            total_count = 0
+            for year in years:
+                for c in count:
+                    if c[0] == artist and c[1] == year:
+                        row.append(c[2])
+                        total_count += 1
+                        break
+                else:
+                    row.append(0)
+            row.append(total_count)
+            csv_writer.writerow(row)
+    return
 
 # ################# MAIN ######################
 
@@ -825,7 +1099,13 @@ if __name__ == "__main__":
         if SPOTIFY_ENABLE:
             playlist_get_all()
 
-        if action == 'line_chart_top_artists':
+        if action == 'get_stats':
+            get_stats()
+        if action == 'line_chart_top_albums':
+            line_chart_top_albums()
+        if action == 'line_chart_top_tracks':
+            line_chart_top_tracks()
+        elif action == 'line_chart_top_artists':
             line_chart_top_artists()
         elif action == 'my_hit_wonders':
             number_of_hits = int(sys.argv[2])
@@ -856,9 +1136,6 @@ if __name__ == "__main__":
             create_recommended('monthly')
         elif action == 'recommended_yearly':
             create_recommended('yearly')
-        elif action == 'recommended_spotify':
-            artist = spotify_get_artist('Wilmer X')
-            spotify_get_recommended_tracks(artist)
         elif action == 'sql':
             # the sql must have SELECT artist, title
             playlist_name = str(sys.argv[2])
