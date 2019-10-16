@@ -39,13 +39,14 @@ DATABASE.commit()
 
 # Do not forget to close the connection at the end of the script
 
-token = util.prompt_for_user_token(SPOTIFY_DATA['username'], SPOTIFY_DATA['scope'], SPOTIFY_DATA['CLIENT_ID'], SPOTIFY_DATA['CLIENT_SECRET'], SPOTIFY_DATA['REDIRECT_URI'])
+if SPOTIFY_ENABLE:
+    token = util.prompt_for_user_token(SPOTIFY_DATA['username'], SPOTIFY_DATA['scope'], SPOTIFY_DATA['CLIENT_ID'], SPOTIFY_DATA['CLIENT_SECRET'], SPOTIFY_DATA['REDIRECT_URI'])
 
-if token:
-    SPOTIFY_API = spotipy.Spotify(auth=token)
-    SPOTIFY_API.trace = False
-else:
-    print(f"Can't get token for {SPOTIFY_DATA['username']}")
+    if token:
+        SPOTIFY_API = spotipy.Spotify(auth=token)
+        SPOTIFY_API.trace = False
+    else:
+        print(f"Can't get token for {SPOTIFY_DATA['username']}")
 
 
-# logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
